@@ -4,7 +4,7 @@
 import { useState } from 'react'
 
 // Next Imports
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 // MUI Imports
 import Typography from '@mui/material/Typography'
@@ -73,11 +73,30 @@ const LoginV2 = ({ mode }) => {
         username,
         password
       })
-      console.log(loginResponse.data)
-      localStorage.setItem('token', loginResponse.data.data)
-      redirect('/dashboard')
+
+      try {
+        // credential check
+        const credentialResponse = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/auth/check', {
+          headers: {
+            Authorization: `Bearer ${loginResponse.data.data}`
+          }
+        })
+
+        // set local storage
+        localStorage.setItem('token', credentialResponse.data.data)
+
+        // set cookie
+        document.cookie = `token=${credentialResponse.data.data}; path=/; max-age=86400`
+        router.push('/home')
+      }
+      catch (e) {
+        console.log(e)
+        setErrorState("Kredensial tidak valid!")
+      }
+
     }
     catch (e) {
+      console.log(e)
       setErrorState("Username dan password salah!")
     }
 
